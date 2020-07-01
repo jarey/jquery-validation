@@ -15,7 +15,10 @@
 	<script src="rules.js"></script>
 	<script src="messages.js"></script>
 	<script src="methods.js"></script>
+	<script src="additional/cnhBR.js"></script>
 	<script src="additional/creditcard.js"></script>
+	<script src="additional/netmask.js"></script>
+	<script src="additional/abaRoutingNumber.js"></script>
 	<script src="aria.js"></script>
 	<script src="error-placement.js"></script>
 </head>
@@ -108,6 +111,10 @@
 	<form id="testForm5">
 		<input data-rule-equalto="#x2" value="x" name="x1" id="x1">
 		<input data-rule-equalto="#x1" value="y" name="x2" id="x2">
+		<input data-rule-lessThan="#y2" value="1" name="y1" id="y1">
+		<input data-rule-greaterThan="#y1" value="10" name="y2" id="y2">
+		<input data-rule-lessThanEqual="#z2" value="10" name="z1" id="z1">
+		<input data-rule-greaterThanEqual="#z1" value="10" name="z2" id="z2">
 	</form>
 	<form id="testForm6">
 		<input data-rule-required="true" data-rule-minlength="2" type="checkbox" name="check" id="form6check1">
@@ -272,7 +279,9 @@
 		<input id="v2-i4" name="v2-i4" class="required" minlength="2">
 		<input id="v2-i5" name="v2-i5" class="required" minlength="2" maxlength="5" customMethod1="123">
 		<input id="v2-i6" name="v2-i6" class="required customMethod2" data-rule-maxlength="5" data-rule-minlength="2">
-		<input id="v2-i7" name="v2-i7">
+		<input id="v2-i7" name="v2-i7" data-rule-number data-rule-required>
+		<input id="v2-i8" name="v2-i8" data-rule-number="" data-rule-required="">
+		<input id="v2-i9" name="v2-i9">
 	</form>
 	<form id="checkables">
 		<input type="checkbox" id="checkable1" name="checkablesgroup" class="required">
@@ -434,6 +443,24 @@
 			<option value="2015">2015</option>
 			<option value="2016">2016</option>
 		</select>
+	</form>
+	<form id="testForm27">
+		<input name="year"/>
+		<button name="submitForm27" value="someValue" type="submit"><span>Submit</span></button>
+	</form>
+	
+	<form id="cnhFormTest">
+		<input id="cnhnumber" name="cnhnumber" required>
+		<button name="submitFormCnh" value="submitFormCnh" type="submit"><span>Submit</span></button>
+	</form>
+	
+	<form id="_contenteditableForm">
+		<div name="first_name" id="first_name" contenteditable placeholder="First Name"></div>
+		<br>
+		<input type="text" name="something" id="_something" />
+	</form>
+	<form id="testForm28">
+		<input type="text" name="f28input" required>
 	</form>
 </div>
 </body>

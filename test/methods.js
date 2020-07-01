@@ -42,6 +42,39 @@ function acceptFileDummyInput( filename, mimeType ) {
 	};
 }
 
+function fileDummyInput( selectedFiles ) {
+	var aFiles = [],
+		oFiles;
+
+	for ( var i = 0; i < selectedFiles.length; i++ ) {
+		aFiles.push( {
+			name: selectedFiles[ i ].name,
+			size: selectedFiles[ i ].size,
+			type: "image/jpeg"
+		} );
+	}
+
+	//Convert the array of objects to an object.
+	oFiles = aFiles.reduce( function( acc, cur, i ) {
+		acc[ i ] = cur;
+		return acc;
+	}, {} );
+
+	//Add the "length" property to the object.
+	oFiles.length = selectedFiles.length;
+
+	//Add the "item()" method to the object.
+	oFiles.item = function( i ) { return aFiles[ i ]; };
+
+	return {
+		type: "file",
+		files: oFiles,
+		nodeName: "INPUT",
+		value: "/tmp/fake_value",
+		hasAttribute: function() { return false; }
+	};
+}
+
 QUnit.module( "methods" );
 
 QUnit.test( "default messages", function( assert ) {
@@ -379,6 +412,26 @@ QUnit.test( "#1760 - step modulo/remainder regression tests", function( assert )
 	}
 } );
 
+QUnit.test( "lessThan", function( assert ) {
+	var v = jQuery( "#form" ).validate(),
+		method = $.validator.methods.lessThan,
+		e = $( "#value2" );
+
+	assert.ok( method.call( v, "1", e[ 0 ], "#value2" ), "Valid integer" );
+	assert.ok( !method.call( v, "10", e[ 0 ], "#value2" ), "Invalid integer" );
+	assert.ok( !method.call( v, "11", e[ 0 ], "#value2" ), "Invalid integer" );
+} );
+
+QUnit.test( "lessThanEqual", function( assert ) {
+	var v = jQuery( "#form" ).validate(),
+		method = $.validator.methods.lessThanEqual,
+		e = $( "#value2" );
+
+	assert.ok( method.call( v, "1", e[ 0 ], "#value2" ), "Valid integer" );
+	assert.ok( method.call( v, "10", e[ 0 ], "#value2" ), "Valid integer" );
+	assert.ok( !method.call( v, "11", e[ 0 ], "#value2" ), "Invalid integer" );
+} );
+
 QUnit.test( "equalTo", function( assert ) {
 	var v = jQuery( "#form" ).validate(),
 		method = $.validator.methods.equalTo,
@@ -386,6 +439,26 @@ QUnit.test( "equalTo", function( assert ) {
 
 	assert.ok( method.call( v, "Test", e[ 0 ], "#text1" ), "Text input" );
 	assert.ok( method.call( v, "T", e[ 1 ], "#text2" ), "Another one" );
+} );
+
+QUnit.test( "greaterThanEqual", function( assert ) {
+	var v = jQuery( "#form" ).validate(),
+		method = $.validator.methods.greaterThanEqual,
+		e = $( "#value2" );
+
+	assert.ok( !method.call( v, "1", e[ 0 ], "#value2" ), "Invalid integer" );
+	assert.ok( method.call( v, "10", e[ 0 ], "#value2" ), "Valid integer" );
+	assert.ok( method.call( v, "11", e[ 0 ], "#value2" ), "Valid integer" );
+} );
+
+QUnit.test( "greaterThan", function( assert ) {
+	var v = jQuery( "#form" ).validate(),
+		method = $.validator.methods.greaterThan,
+		e = $( "#value2" );
+
+	assert.ok( !method.call( v, "1", e[ 0 ], "#value2" ), "Invalid integer" );
+	assert.ok( !method.call( v, "10", e[ 0 ], "#value2" ), "Invalid integer" );
+	assert.ok( method.call( v, "11", e[ 0 ], "#value2" ), "Valid integer" );
 } );
 
 QUnit.test( "extension", function( assert ) {
@@ -427,9 +500,6 @@ QUnit.test( "remote", function( assert ) {
 					required: "Please",
 					remote: jQuery.validator.format( "{0} in use" )
 				}
-			},
-			submitHandler: function() {
-				assert.ok( false, "submitHandler may never be called when validating only elements" );
 			}
 		} ),
 		done = assert.async();
@@ -522,9 +592,6 @@ QUnit.test( "remote extensions", function( assert ) {
 				username: {
 					required: "Please"
 				}
-			},
-			submitHandler: function() {
-				assert.ok( false, "submitHandler may never be called when validating only elements" );
 			}
 		} ),
 		done = assert.async();
@@ -741,9 +808,9 @@ QUnit.test( "phone (us)", function( assert ) {
 	assert.ok( method( "1(212)-999-2345" ), "Valid US phone number" );
 	assert.ok( method( "212 999 2344" ), "Valid US phone number" );
 	assert.ok( method( "212-999-0983" ), "Valid US phone number" );
+	assert.ok( method( "234-911-5678" ), "Valid US phone number" );
 	assert.ok( !method( "111-123-5434" ), "Invalid US phone number. Area Code cannot start with 1" );
 	assert.ok( !method( "212 123 4567" ), "Invalid US phone number. NXX cannot start with 1" );
-	assert.ok( !method( "234-911-5678" ), "Invalid US phone number, because the exchange code cannot be in the form N11" );
 	assert.ok( !method( "911-333-5678" ), "Invalid US phone number, because the area code cannot be in the form N11" );
 	assert.ok( method( "234-912-5678" ), "Valid US phone number" );
 } );
@@ -799,6 +866,15 @@ QUnit.test( "mobileUK", function( assert ) {
 	assert.ok( !method( "+447604234323" ), "Invalid UK Mobile Number" );
 	assert.ok( !method( "+4477342343234" ), "Invalid UK Mobile Number" );
 	assert.ok( !method( "+4444342343234" ), "Invalid UK Mobile Number" );
+} );
+
+QUnit.test( "mobileRU", function( assert ) {
+	var method = methodTest( "mobileRU" );
+	assert.ok( method( "+74957207089" ), "Valid RU Mobile Number" );
+	assert.ok( method( "84957207089" ), "Valid RU Mobile Number" );
+	assert.ok( !method( "+447604234323" ), "Invalid RU Mobile Number" );
+	assert.ok( !method( "9477342343234" ), "Invalid RU Mobile Number" );
+	assert.ok( !method( "344342343234" ), "Invalid RU Mobile Number" );
 } );
 
 QUnit.test( "dateITA", function( assert ) {
@@ -1163,6 +1239,7 @@ QUnit.test( "creditcardtypes, all", function( assert ) {
 	} );
 
 	testCardTypeByNumber( assert, "4111-1111-1111-1111", "VISA", true );
+	testCardTypeByNumber( assert, "2211-1111-1111-1114", "MasterCard", true );
 	testCardTypeByNumber( assert, "5111-1111-1111-1118", "MasterCard", true );
 	testCardTypeByNumber( assert, "6111-1111-1111-1116", "Discover", true );
 	testCardTypeByNumber( assert, "3400-0000-0000-009", "AMEX", true );
@@ -1203,6 +1280,7 @@ QUnit.test( "creditcardtypes, mastercard", function( assert ) {
 		}
 	} );
 
+	testCardTypeByNumber( assert, "2211-1111-1111-1114", "MasterCard", true );
 	testCardTypeByNumber( assert, "5111-1111-1111-1118", "MasterCard", true );
 	testCardTypeByNumber( assert, "6111-1111-1111-1116", "Discover", false );
 	testCardTypeByNumber( assert, "3400-0000-0000-009", "AMEX", false );
@@ -1495,6 +1573,52 @@ QUnit.test( "cifES", function( assert ) {
 	assert.ok( !method( "B-43.522.192" ), "CIF invalid: dots and dash" );
 } );
 
+QUnit.test( "nipPL", function( assert ) {
+	var method = methodTest( "nipPL" );
+	assert.ok( method( "3514242002" ), "NIP valid" );
+	assert.ok( method( "8117892840" ), "NIP valid" );
+	assert.ok( method( "7249598309" ), "NIP valid" );
+	assert.ok( method( "6853539166" ), "NIP valid" );
+	assert.ok( method( "5715750580" ), "NIP valid" );
+	assert.ok( method( "3496120813" ), "NIP valid" );
+	assert.ok( method( "1565710251" ), "NIP valid" );
+	assert.ok( method( "8190761165" ), "NIP valid" );
+	assert.ok( method( "9487499667" ), "NIP valid" );
+	assert.ok( method( "9283384684" ), "NIP valid" );
+	assert.ok( method( "3887569138" ), "NIP valid" );
+	assert.ok( method( "3962898856" ), "NIP valid" );
+	assert.ok( !method( "76355753" ), "NIP invalid: too short" );
+	assert.ok( !method( "454" ), "NIP invalid: too short" );
+	assert.ok( !method( "234565545" ), "NIP invalid: too short" );
+	assert.ok( !method( "543455" ), "NIP invalid: too short" );
+	assert.ok( !method( "6345634563456" ), "NIP invalid: too long" );
+	assert.ok( !method( "53453453455335" ), "NIP invalid: too long" );
+	assert.ok( !method( "543453760902" ), "NIP invalid: too long" );
+	assert.ok( !method( "43090012454" ), "NIP invalid: too long" );
+	assert.ok( !method( "3958250194" ), "NIP invalid: wrong checksum" );
+	assert.ok( !method( "3928541049" ), "NIP invalid: wrong checksum" );
+	assert.ok( !method( "5920397295" ), "NIP invalid: wrong checksum" );
+	assert.ok( !method( "9502947712" ), "NIP invalid: wrong checksum" );
+} );
+
+QUnit.test( "phonePL", function( assert ) {
+    var method = methodTest( "phonePL" );
+	assert.ok( method( "+48 123 456 789" ), "Valid phone PL" );
+	assert.ok( method( "00 48 123 456 789" ), "Valid phone PL" );
+	assert.ok( method( "(+48) 123 456 789" ), "Valid phone PL" );
+	assert.ok( method( "(48) 123 456 789" ), "Valid phone PL" );
+	assert.ok( method( " 13 34 56 78  9 " ), "Valid phone PL" );
+	assert.ok( method( "13 345 67 89" ), "Valid phone PL" );
+	assert.ok( !method( "100 000 000" ), "Invalid phone PL: cannot start with 10x xxx xxx" );
+	assert.ok( !method( "111 111 111" ), "Invalid phone PL: cannot start with 11x xxx xxx" );
+	assert.ok( !method( "123 456 78" ), "Invalid phone PL: too short" );
+	assert.ok( !method( "123 4567890" ), "Invalid phone PL: too long" );
+	assert.ok( !method( "700 123 456" ), "Invalid phone PL: intelligent network, premium rate" );
+	assert.ok( !method( "800 123 456" ), "Invalid phone PL: intelligent network, freephone" );
+	assert.ok( !method( "980 000 000" ), "Invalid phone PL: cannot start with 98x xxx xxx" );
+	assert.ok( !method( "990 000 000" ), "Invalid phone PL: cannot start with 99x xxx xxx" );
+} );
+
 QUnit.test( "maxWords", function( assert ) {
 	var method = methodTest( "maxWords" ),
 		maxWords = 6;
@@ -1602,6 +1726,39 @@ QUnit.test( "cpfBR", function( assert ) {
 	assert.ok( !method( "11144477737" ), "Invalid CPF Number: 2nd check number failed" );
 } );
 
+QUnit.test( "cnpjBR", function( assert ) {
+	var method = methodTest( "cnpjBR" );
+	assert.ok( method( "18517604000175" ), "Valid CNPJ Number" );
+	assert.ok( method( "18.517.604/0001-75" ), "Valid CNPJ Number" );
+	assert.ok( method( "06994660000111" ), "Valid CNPJ Number" );
+	assert.ok( method( "06.994.660/0001-11" ), "Valid CNPJ Number" );
+	assert.ok( !method( "00000000000000" ), "Invalid CNPJ Number: dump data" );
+	assert.ok( !method( "11111111111111" ), "Invalid CNPJ Number: dump data" );
+	assert.ok( !method( "22222222222222" ), "Invalid CNPJ Number: dump data" );
+	assert.ok( !method( "99999999999999" ), "Invalid CNPJ Number: dump data" );
+	assert.ok( !method( "8517604000175" ), "Invalid CNPJ Number: < 14 digits" );
+	assert.ok( !method( "8.517.604/0001-75" ), "Invalid CNPJ Number: < 14 digits" );
+	assert.ok( !method( "1185176040001750" ), "Invalid CNPJ Number: > 14 digits" );
+	assert.ok( !method( "18.517.604/0001-750" ), "Invalid CNPJ Number: > 14 digits" );
+	assert.ok( !method( "18517604000174" ), "Invalid CNPJ Number" );
+	assert.ok( !method( "18.517.604/0001-74" ), "Invalid CNPJ Number" );
+	assert.ok( !method( "06994660000211" ), "Invalid CNPJ Number" );
+	assert.ok( !method( "06.994.660/0002-11" ), "Invalid CNPJ Number" );
+} );
+
+QUnit.test( "nisBR", function( assert ) {
+	var method = methodTest( "nisBR" );
+	assert.ok( method( "10757995753" ), "Valid NIS/PIS Number" );
+	assert.ok( method( "107.57995.75-3" ), "Valid NIS/PIS Number" );
+	assert.ok( method( "107.579.957-53" ), "Valid NIS/PIS Number" );
+	assert.ok( method( "107-579-957-53" ), "Valid NIS/PIS Number" );
+	assert.ok( method( "107.579.957.5-3" ), "Valid NIS/PIS Number" );
+	assert.ok( !method( "99999999999" ), "Invalid NIS/PIS Number: dump data" );
+	assert.ok( !method( "1075799575" ), "Invalid  NIS/PIS Number: < 11 digits" );
+	assert.ok( !method( "111444777355" ), "Invalid NIS/PIS Number: > 11 digits" );
+	assert.ok( !method( "10757995752" ), "Invalid NIS/PIS Number: check number failed" );
+} );
+
 QUnit.test( "file accept - image wildcard", function( assert ) {
 	var input = acceptFileDummyInput( "test.png", "image/png" ),
 		$form = $( "<form />" ),
@@ -1635,4 +1792,82 @@ QUnit.test( "file accept - invalid mime type", function( assert ) {
 		$form = $( "<form />" ),
 		proxy = $.proxy( $.validator.methods.accept, new $.validator( {}, $form[ 0 ] ), null, input, "application/vnd.google-earth.kml+xml" );
 	assert.equal( proxy(), false, "the selected file for upload has invalid mime type" );
+} );
+
+QUnit.test( "file size - below max", function( assert ) {
+	var input = acceptFileDummyInput( "test.png", "image/png" ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, "500001" );
+	assert.ok( proxy(), "the selected file for upload is smaller than max" );
+} );
+
+QUnit.test( "file size - over max", function( assert ) {
+	var input = acceptFileDummyInput( "test.png", "image/png" ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, "500000" );
+	assert.equal( proxy(), false, "the selected file for upload is greater than max" );
+} );
+
+QUnit.test( "file maxsize - valid size", function( assert ) {
+	var selectedFiles = [ { name: "test.jpg", size: 500000 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.ok( proxy(), "the size of the file does not exceed the maximum" );
+} );
+
+QUnit.test( "file maxsize - valid size for each file", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 500000 }, { name: "test2.jpg", size: 500000 } ],
+		input = fileDummyInput( selectedFiles ),
+	$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.ok( proxy(), "the size of the each file does not exceed the maximum" );
+} );
+
+QUnit.test( "file maxsize - too big", function( assert ) {
+	var selectedFiles = [ { name: "test.jpg", size: 500001 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.equal( proxy(), false, "the size of the file exceeds the maximum" );
+} );
+
+QUnit.test( "file maxsize - second file too big", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 500000 }, { name: "test2.jpg", size: 500001 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsize, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.equal( proxy(), false, "the size of the second file exceeds the maximum" );
+} );
+
+QUnit.test( "file maxsizetotal - valid size", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 250000 }, { name: "test2.jpg", size: 250000 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsizetotal, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.ok( proxy(), "the size of the files together does not exceed the maximum" );
+} );
+
+QUnit.test( "file maxsizetotal - too big", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 250000 }, { name: "test2.jpg", size: 250001 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxsizetotal, new $.validator( {}, $form[ 0 ] ), null, input, 500000 );
+	assert.equal( proxy(), false, "the size of the files together exceeds the maximum" );
+} );
+
+QUnit.test( "file maxfiles - valid number", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 500000 }, { name: "test2.jpg", size: 500000 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxfiles, new $.validator( {}, $form[ 0 ] ), null, input, 2 );
+	assert.ok( proxy(), "the number of files does not exceed the maximum" );
+} );
+
+QUnit.test( "file maxfiles - too many", function( assert ) {
+	var selectedFiles = [ { name: "test1.jpg", size: 500000 }, { name: "test2.jpg", size: 500000 }, { name: "test3.jpg", size: 500000 } ],
+		input = fileDummyInput( selectedFiles ),
+		$form = $( "<form />" ),
+		proxy = $.proxy( $.validator.methods.maxfiles, new $.validator( {}, $form[ 0 ] ), null, input, 2 );
+	assert.equal( proxy(), false, "the number of files exceeds the maximum" );
 } );
